@@ -22,7 +22,6 @@ const Home = () => {
     const submitSignup = async(e) =>{
         e.preventDefault();
         dispatch(user(isSign));
-
         try{
              await axios.post("http://localhost:8008/user/signup",isSign)
             alert("Signup Successful");
