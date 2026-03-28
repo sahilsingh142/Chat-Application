@@ -3,35 +3,46 @@ import mainImg from './Images/main image.png'
 import { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from "react-router-dom";
-import { useDispatch} from "react-redux";
-import { user } from './Redux/HandleSlice';
+import { useDispatch } from 'react-redux';
+import { setUser } from './Redux/HandleSlice';
 
 const Home = () => {
-    const dispatch = useDispatch();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
     const [isSign, setIsSign] = useState({
-        name:"",
-        email:"",
-        password:"",
+        name: "",
+        email: "",
+        password: "",
     });
 
-    const handleSignup = (e) =>{
-        setIsSign({...isSign,[e.target.name]:e.target.value});
+    const handleSignup = (e) => {
+        setIsSign({ ...isSign, [e.target.name]: e.target.value });
     }
 
-    const submitSignup = async(e) =>{
+    const submitSignup = async (e) => {
         e.preventDefault();
-        dispatch(user(isSign));
-        try{
-             await axios.post("http://localhost:8008/user/signup",isSign)
-            alert("Signup Successful");
-            setTimeout(() => {
-                navigate('/Login')
-            },500)
-        }catch(err){
-             alert(err.response?.data?.message || "Signup Failed");
+
+        try {
+
+            localStorage.removeItem("token");
+
+            const res = await axios.post(
+                "http://localhost:8008/user/signup",
+                isSign
+            );
+
+            localStorage.setItem("token", res.data.token);
+            navigate('/MainSection');
+            dispatch(setUser({
+                id: res.data.data._id,
+                name: res.data.data.name
+            }));
+
+        } catch (err) {
+            alert(err.response?.data?.message || "Signup Failed");
         }
-    }
+    };
 
     return (
         <>
@@ -85,7 +96,7 @@ const Home = () => {
                                         required
                                         name='password'
                                         className="w-full p-3 rounded-lg bg-white/20 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-white/70"
-                                         onChange={handleSignup}
+                                        onChange={handleSignup}
                                     />
                                 </div>
 

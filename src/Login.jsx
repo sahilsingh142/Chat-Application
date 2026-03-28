@@ -2,8 +2,13 @@ import { useEffect, useState } from 'react'
 import mainImg from './Images/main image.png'
 import axios from 'axios'
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from 'react-redux';
+import { setUser } from './Redux/HandleSlice';
 
 const Login = () => {
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [isLogin, setIsLogin] = useState({
     email: "",
@@ -14,18 +19,22 @@ const Login = () => {
     setIsLogin({ ...isLogin, [e.target.name]: e.target.value })
   }
 
-  const navigate = useNavigate();
   const submitLogin = async (e) => {
     e.preventDefault();
     try {
       const res = await axios.post("http://localhost:8008/user/login", isLogin);
-
       localStorage.setItem("token", res.data.token);
-
       alert(res.data.message);
+
       setTimeout(() => {
         navigate('/MainSection')
       }, 500);
+
+      dispatch(setUser({
+        id: res.data.user.id,
+        name: res.data.user.name
+      }));
+  
     } catch (err) {
       if (err.response) {
         alert(err.response.data.message);
@@ -35,6 +44,7 @@ const Login = () => {
     }
   }
 
+
   useEffect(() => {
     const checkUser = async () => {
       const token = localStorage.getItem("token");
@@ -42,19 +52,30 @@ const Login = () => {
       if (!token) return;
 
       try {
-        await axios.get("http://localhost:8008/user/main", {
+        const res = await axios.get("http://localhost:8008/user/main", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
+
+        dispatch(setUser({
+          id: res.data.user._id,
+          name: res.data.user.name
+        }));
+
         navigate("/MainSection");
+
       } catch (err) {
+        console.log("auto login failed", err.response?.data || err.message);
+
         localStorage.removeItem("token");
+        // NO ALERT HERE
       }
     }
 
     checkUser();
-  },[]);
+  }, []);
+
 
   return (
     <>

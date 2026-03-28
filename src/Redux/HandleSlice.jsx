@@ -1,21 +1,23 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    user:"",
+    user:null,
+    id:null,
 }
 
 const handleState = createSlice({
     name:"chat",
     initialState,
     reducers:{
-        user:(state,action) => {
-            state.user = action.payload.name;
-        }
+     setUser:(state,action) => {
+        state.user = action.payload.name;
+        state.id = action.payload.id;
+     }  
     }
 })
 
 export const {
-    user,
+   setUser ,
 } = handleState.actions;
 
 export default handleState.reducer;

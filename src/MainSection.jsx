@@ -4,21 +4,26 @@ import { useNavigate } from "react-router-dom";
 import mainImg from './Images/main image.png';
 import sendImg from './Images/send.png';
 import { useSelector } from "react-redux";
+import { useSocket } from "./Socket";
 
 const MainSection = () => {
 
   const [inputdata, setInputData] = useState("");
-  const [showData, setShowData] = useState('');
   const [searchInp, setSearchInp] = useState('');
   const [uesrName, setUserName] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [messages, setMessages] = useState([]);
+
   const navigate = useNavigate();
   const user = useSelector((state) => state.chat);
   const refe = useRef(null);
   const searRef = useRef(null);
+  const socket = useSocket();
+  const token = localStorage.getItem("token");
 
+  //Here check the jwt token
   useEffect(() => {
     const fetchMain = async () => {
-      const token = localStorage.getItem("token");
       if (!token) {
         return navigate('/');
       }
@@ -36,15 +41,106 @@ const MainSection = () => {
     fetchMain();
   }, []);
 
-  const handleChatData = (e) => {
-    setShowData(inputdata);
-    refe.current.value = "";
-  }
+  useEffect(() => {
+    if (!socket || !selectedUser || !user?.id) return;
+
+    const handleNewMessage = (newMsg) => {
+
+      const isConversationMessage =
+        (
+          newMsg.senderId?.toString() === user.id &&
+          newMsg.receiverId?.toString() === selectedUser._id
+        ) ||
+        (
+          newMsg.senderId?.toString() === selectedUser._id &&
+          newMsg.receiverId?.toString() === user.id
+        );
+
+      if (isConversationMessage) {
+
+        setMessages(prev => {
+
+          // prevent duplicate
+          const exists = prev.some(m => m._id === newMsg._id);
+
+          if (exists) return prev;
+
+          return [...prev, newMsg];
+        });
+
+      }
+    };
+
+    socket.on("newMessage", handleNewMessage);
+
+    return () => socket.off("newMessage", handleNewMessage);
+
+  }, [socket, selectedUser, user.id]);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!selectedUser) return;
+
+      try {
+        const res = await axios.get(
+          `http://localhost:8008/api/getMessages/${selectedUser._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setMessages(res.data);
+
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchMessages();
+  }, [selectedUser]);
+
+  const handleChatData = async () => {
+    if (!selectedUser) {
+      return alert("Select a user first");
+    }
+
+    try {
+      const res = await axios.post(
+        `http://localhost:8008/api/sendMessage/${selectedUser._id}`,
+        {
+          message: inputdata
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Optimistic update (important for UX)
+      setMessages((prev) => [...prev, res.data]);
+
+      setInputData("");
+      refe.current.value = "";
+
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   const handleSearchBox = async (e) => {
+    const token = localStorage.getItem("token")
     try {
-      const res = await axios.get(`http://localhost:8008/api/getUser?search=${searchInp}`);
-      setUserName((prev) => [...prev, ...res.data.users]);
+      const res = await axios.get(`http://localhost:8008/api/getUser?search=${searchInp}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setUserName(res.data.users);
       searRef.current.value = "";
     }
     catch (err) {
@@ -91,7 +187,11 @@ const MainSection = () => {
                     return (
                       <li
                         key={user._id}
-                        className="w-full py-5 text-left pl-3 bg-neutral-700 rounded-2xl text-white tracking-widest font-medium font-mono shadow-2xl mt-2"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setMessages([]); // clear old chat
+                        }}
+                        className="cursor-pointer"
                       >
                         {user.name}
                       </li>
@@ -102,9 +202,19 @@ const MainSection = () => {
 
               <div className="w-[60%] bg-black/30 hidden md:flex flex-col  backdrop-blur-lg border border-white/30 rounded-2xl text-white shadow-2xl">
                 <div className="w-full h-[90%] p-4 flex items-end">
-                  <h1 className="text-right font-medium w-full">
-                    <span className="bg-neutral-700 px-4 py-2 rounded-2xl">{showData}</span>
-                  </h1>
+                  {messages.map((msg) => (
+                    <div
+                      key={msg._id}
+                      className={`w-full flex ${msg.senderId?.toString() === user.id
+                        ? "justify-end"
+                        : "justify-start"
+                        }`}
+                    >
+                      <span className="bg-neutral-700 px-4 py-2 rounded-2xl m-1">
+                        {msg.message}
+                      </span>
+                    </div>
+                  ))}
                 </div>
                 <div className="w-full h-[12%] p-5">
                   <div className="relative w-full">
