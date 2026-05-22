@@ -4,7 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { store } from './Redux/Store.jsx';
 import { Provider, useSelector } from 'react-redux';
-import { SocketProvider } from './Socket.jsx';
+import { SocketProvider } from './Socket/Socket.jsx';
 import ReactDOM from "react-dom/client";
 
 const SocketWrapper = () => {

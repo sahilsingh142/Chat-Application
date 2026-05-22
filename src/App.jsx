@@ -1,6 +1,6 @@
 import { Routes, Route} from 'react-router';
-import Home from './Home';
-import Login from './Login';
+import Home from './Authentication/Home.jsx';
+import Login from './Authentication/Login.jsx';
 import MainSection from './MainSection';
 import ProtectedRoute from './ProtectedRoute';
 

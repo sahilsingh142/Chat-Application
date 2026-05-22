@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import mainImg from './Images/main image.png'
+import mainImg from '../Images/main image.png'
 import axios from 'axios'
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from 'react-redux';
-import { setUser } from './Redux/HandleSlice';
+import { setUser } from '../Redux/HandleSlice.jsx';
 
 const Login = () => {
 
@@ -31,7 +31,7 @@ const Login = () => {
       }, 500);
 
       dispatch(setUser({
-        id: res.data.user.id,
+        id: res.data.user._id.toString(),
         name: res.data.user.name
       }));
   
@@ -59,7 +59,7 @@ const Login = () => {
         });
 
         dispatch(setUser({
-          id: res.data.user._id,
+          id: res.data.user._id.toString(),
           name: res.data.user.name
         }));
 

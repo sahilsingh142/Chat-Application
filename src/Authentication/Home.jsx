@@ -1,10 +1,10 @@
 import { Link } from 'react-router'
-import mainImg from './Images/main image.png'
+import mainImg from '../Images/main image.png'
 import { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from 'react-redux';
-import { setUser } from './Redux/HandleSlice';
+import { setUser } from '../Redux/HandleSlice.jsx';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -35,7 +35,7 @@ const Home = () => {
             localStorage.setItem("token", res.data.token);
             navigate('/MainSection');
             dispatch(setUser({
-                id: res.data.data._id,
+                id: res.data.data._id.toString(),
                 name: res.data.data.name
             }));
 
